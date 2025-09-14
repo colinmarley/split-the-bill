@@ -1,20 +1,17 @@
-import { getPeople, savePerson, updateReceipt } from '@/services/FirebaseService';
+import { getPeople, updateReceipt } from '@/services/FirebaseService';
 import { useReceiptStore, useUserStore } from '@/store';
-import { useAddPerson, useRemovePerson } from '@/store/receipt';
 import { getCurrentReceipt, getCurrentReceiptId, getReceiptPeople } from '@/store/receipt/getters';
 import { getUser } from '@/store/user';
 import { Person, ReceiptItem } from '@/types/receipt';
+import { addNewPerson } from '@/utils/assignmentUtils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
-import uuid from 'react-native-uuid';
+import { Alert, Button, FlatList, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 export default function AssignPeopleScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   console.log('params:', params);
-  const addPerson = useAddPerson();
-  const removePerson = useRemovePerson();
   const currentReceiptId = useReceiptStore(getCurrentReceiptId);
   const people = useReceiptStore(getReceiptPeople);
   const user = useUserStore(getUser);
@@ -49,17 +46,13 @@ export default function AssignPeopleScreen() {
       setLoading(false);
       return;
     }
-    try {
-      await savePerson({ name: newPersonName, id: uuid.v4() });
-      const personToAdd = { name: newPersonName, id: uuid.v4(), userId: user.uid };
-      console.log('Adding person:', personToAdd);
-      addPerson(personToAdd);
+    const result = await addNewPerson(newPersonName.trim());
+    if (result.error) {
+      Alert.alert('Error', result.error);
+    } else {
       setNewPersonName('');
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Could not add person');
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   // Assign all items to people (simple example: assign all items to all people)
@@ -104,12 +97,12 @@ export default function AssignPeopleScreen() {
     const quantityNum = parseInt(assignQuantity) || 1;
     const item = currentReceipt.items[selectedItemIdx];
     // Prevent duplicate assignment
-    if (item.assignedTo.some(a => a.personId === person.id)) {
+    if (item?.assignedTo?.some(a => a.personId === person.id)) {
       Alert.alert('Already assigned', `${person.name} is already assigned to this item.`);
       return;
     }
     // Validate total assigned quantity
-    const totalAssigned = item.assignedTo.reduce((sum, a) => sum + (a.quantity || 0), 0);
+    const totalAssigned = item?.assignedTo?.reduce((sum, a) => sum + (a.quantity || 0), 0) || 0;
     if (totalAssigned + quantityNum > item.quantity) {
       Alert.alert('Quantity exceeded', `Total assigned quantity exceeds item quantity (${item.quantity}).`);
       return;
@@ -123,7 +116,37 @@ export default function AssignPeopleScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Assign People to Receipt</Text>
+
+      {/* Saved People List for easy adding */}
+      <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>Saved People</Text>
+      <FlatList
+        data={savedPeople}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => {
+          const checked = people?.some(p => p.id === item.id);
+          return (
+            <View style={styles.personRow}>
+              <Text style={styles.personText}>{item.name}</Text>
+              <Switch
+                value={checked}
+                onValueChange={(newValue) => {
+                  if (newValue) {
+                    useReceiptStore.getState().addPerson(item);
+                  } else {
+                    useReceiptStore.getState().removePerson(item.id);
+                  }
+                }}
+                style={{ marginLeft: 12 }}
+              />
+            </View>
+          );
+        }}
+        ListEmptyComponent={<Text style={{ marginTop: 8 }}>No saved people found.</Text>}
+        style={styles.peopleList}
+      />
+
       {/* People List at Top */}
+      <Text style={{ fontWeight: 'bold', marginTop: 16 }}>People in Receipt</Text>
       <FlatList
         data={people}
         keyExtractor={item => item.id}

@@ -27,10 +27,13 @@ export async function savePerson(person: PersonData) {
   const user = auth.currentUser;
   if (!user) throw new Error('User not signed in');
   if (!person?.id) throw new Error('Person ID is required');
+  if (!person?.name) throw new Error('Person name is required');
+  if (person.name.trim() === '') throw new Error('Person name cannot be empty');
+  if (!person?.userId) person.userId = user.uid;
 
   const personRef = doc(firestore, FirebaseCollections.PEOPLE, person.id);
   try {
-    await setDoc(personRef, { ...person, userId: user.uid });
+    await setDoc(personRef, { ...person });
     console.log('Person saved successfully:', person);
   } catch (error) {
     console.error('Error saving person:', error);

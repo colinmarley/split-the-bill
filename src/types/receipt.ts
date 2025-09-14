@@ -25,6 +25,7 @@ export interface PersonResultData {
 export interface PersonData {
   id: string;
   name: string;
+  userId: string;
 }
 
 export interface ReceiptStoreItem {
@@ -45,6 +46,7 @@ export interface Receipt {
   people: Person[];
   taxPercent?: number;
   tipPercent?: number;
+  total?: string;
   applyTipToAll?: boolean;
 }
 

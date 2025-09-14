@@ -7,4 +7,5 @@ export const useAddReceiptItem = () => useReceiptStore((state: ReceiptState) => 
 export const useAssignItem = () => useReceiptStore((state: ReceiptState) => state.assignItem);
 export const useUpdateReceiptItem = () => useReceiptStore((state: ReceiptState) => state.updateReceiptItem);
 export const useResetReceipt = () => useReceiptStore((state: ReceiptState) => state.resetReceipt);
+export const useSetCurrentReceipt = () => useReceiptStore((state: ReceiptState) => state.setCurrentReceipt);
 export const useSetCurrentReceiptId = () => useReceiptStore((state: ReceiptState) => state.setCurrentReceiptId);

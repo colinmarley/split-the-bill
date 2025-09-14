@@ -4,6 +4,7 @@ import SummaryReceiptList from '@/components/summary/SummaryReceiptList';
 import SummaryStoreSection from '@/components/summary/SummaryStoreSection';
 import SummaryTotalBreakdownSection from '@/components/summary/SummaryTotalBreakdownSection';
 import { getReceiptById, updateReceipt } from '@/services/FirebaseService';
+import { useSetCurrentReceipt, useSetCurrentReceiptId } from '@/store/receipt';
 import { ReceiptItem, SavedReceipt } from '@/types/receipt';
 import { Routes } from '@/types/router';
 import { calculateGrandTotal } from '@/utils/summaryUtils';
@@ -12,6 +13,7 @@ import { navigate } from 'expo-router/build/global-state/routing';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Button,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +22,8 @@ import {
 
 export default function ReceiptSummaryScreen() {
   const { receiptId } = useLocalSearchParams();
+  const setCurrentReceiptId = useSetCurrentReceiptId();
+  const setCurrentReceipt = useSetCurrentReceipt();
   const [receipt, setReceipt] = useState<SavedReceipt | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +39,8 @@ export default function ReceiptSummaryScreen() {
           await getReceiptById(receiptId as string);
         console.log(receiptData)
         setReceipt(receiptData);
+        setCurrentReceipt(receiptData);
+        setCurrentReceiptId(receiptData.id);
       } catch (err: any) {
         setError(err.message || 'Error fetching receipt');
       } finally {
@@ -116,15 +122,22 @@ export default function ReceiptSummaryScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={{ marginBottom: 16 }}>
+        <Button
+          title="Edit Assignment"
+          onPress={() => {
+            navigate({ pathname: Routes.ASSIGN_PEOPLE, params: { receiptId: receipt.id } });
+          }}
+          color="#0a7ea4"
+        />
+      </View>
       {/* Store Info */}
       <SummaryStoreSection
         store={receipt.store}
         itemsCount={receipt.items?.length || 0}
         subtotal={subtotal}
       />
-
-      <SummaryReceiptList items={receipt.items} />
-
+      <SummaryReceiptList items={receipt.items} receiptId={receipt.id} />
       {/* Personal Cost Breakdown */}
       <View style={styles.section}>
         <SummaryPersonalCostSection

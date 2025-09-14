@@ -5,6 +5,7 @@ export interface ReceiptState {
   currentReceipt: Receipt;
   currentReceiptId: string | null;
   setReceiptItems: (items: ReceiptItem[]) => void;
+  setCurrentReceipt: (receipt: Receipt) => void;
   setCurrentReceiptId: (id: string) => void;
   addPerson: (person: Person) => void;
   removePerson: (personId: string) => void;
@@ -40,6 +41,9 @@ export const useReceiptStore = create<ReceiptState>((set, get) => ({
   currentReceiptId: initialReceiptState.currentReceiptId,
   setReceiptItems: (items) =>
     set((state) => ({ currentReceipt: { ...state.currentReceipt, items } })),
+  setCurrentReceipt(receipt) {
+    set(() => ({ currentReceipt: receipt }));
+  },
   setCurrentReceiptId(id) {
     set(() => ({ currentReceiptId: id }));
   },
