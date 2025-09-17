@@ -17,6 +17,7 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen name="add_receipt" options={{ title: 'Add Receipt' }} />
+        <Stack.Screen name="select_people" options={{ title: 'Select People' }} />
         <Stack.Screen name="assign_people" options={{ title: 'Assign People' }} />
         <Stack.Screen name="receipt" options={{ title: 'Receipt Photo & OCR' }} />
         <Stack.Screen name="assign" options={{ title: 'Assign Items' }} />

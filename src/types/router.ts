@@ -7,5 +7,7 @@ export enum Routes {
     LOGIN = '/login',
     PEOPLE = '/people',
     RECEIPT = '/receipt',
+    RECEIPT_SUMMARY = '/receipt_summary',
     RESULTS = '/results',
+    SELECT_PEOPLE = '/select_people',
 }

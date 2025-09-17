@@ -39,7 +39,7 @@ export default function AddReceiptScreen() {
       if (!receiptId) throw new Error('No receipt ID returned from saveReceipt');
       setCurrentReceiptId(receiptId);
       // alert('Receipt saved!');
-      router.replace({ pathname: Routes.ASSIGN_PEOPLE });
+      router.replace({ pathname: Routes.SELECT_PEOPLE, params: { receiptId } });
     } catch (error: any) {
       alert('Error saving receipt: ' + (error.message || error));
     }

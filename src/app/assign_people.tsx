@@ -1,12 +1,12 @@
-import { getPeople, updateReceipt } from '@/services/FirebaseService';
+import { updateReceipt } from '@/services/FirebaseService';
 import { useReceiptStore, useUserStore } from '@/store';
 import { getCurrentReceipt, getCurrentReceiptId, getReceiptPeople } from '@/store/receipt/getters';
 import { getUser } from '@/store/user';
 import { Person, ReceiptItem } from '@/types/receipt';
-import { addNewPerson } from '@/utils/assignmentUtils';
+import { Routes } from '@/types/router';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Button, FlatList, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function AssignPeopleScreen() {
   const router = useRouter();
@@ -15,49 +15,14 @@ export default function AssignPeopleScreen() {
   const currentReceiptId = useReceiptStore(getCurrentReceiptId);
   const people = useReceiptStore(getReceiptPeople);
   const user = useUserStore(getUser);
-  const [savedPeople, setSavedPeople] = useState<Person[]>([]);
-  const [newPersonName, setNewPersonName] = useState('');
   const [loading, setLoading] = useState(false);
   const currentReceipt = useReceiptStore(getCurrentReceipt);
 
-  // Fetch people on mount
-  React.useEffect(() => {
-    const fetchPeople = async () => {
-      setLoading(true);
-      try {
-        const data: Person[] = await getPeople();
-        console.log('Fetched people:', data);
-        setSavedPeople(data);
-      } catch (err: any) {
-        Alert.alert('Error', err.message || 'Could not fetch people');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPeople();
-  }, []);
 
-  // Add a person to Firestore
-  const handleAddPerson = async () => {
-    if (!newPersonName.trim()) return;
-    setLoading(true);
-    if (!user?.uid) {
-      Alert.alert('Error', 'User not authenticated');
-      setLoading(false);
-      return;
-    }
-    const result = await addNewPerson(newPersonName.trim());
-    if (result.error) {
-      Alert.alert('Error', result.error);
-    } else {
-      setNewPersonName('');
-    }
-    setLoading(false);
-  };
 
   // Assign all items to people (simple example: assign all items to all people)
   const handleAssignItems = async () => {
-    if (savedPeople.length === 0) {
+  if (people.length === 0) {
       Alert.alert('No people added', 'Please add at least one person.');
       return;
     }
@@ -76,7 +41,7 @@ export default function AssignPeopleScreen() {
     try {
       await updateReceipt({ ...currentReceipt, items: updatedItems }, currentReceiptId);
       Alert.alert('Success', 'Items assigned and receipt saved!');
-      router.replace('/dashboard');
+      router.replace(Routes.RECEIPT_SUMMARY);
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Could not save receipt');
     }
@@ -117,54 +82,21 @@ export default function AssignPeopleScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Assign People to Receipt</Text>
 
-      {/* Saved People List for easy adding */}
-      <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>Saved People</Text>
-      <FlatList
-        data={savedPeople}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => {
-          const checked = people?.some(p => p.id === item.id);
-          return (
-            <View style={styles.personRow}>
-              <Text style={styles.personText}>{item.name}</Text>
-              <Switch
-                value={checked}
-                onValueChange={(newValue) => {
-                  if (newValue) {
-                    useReceiptStore.getState().addPerson(item);
-                  } else {
-                    useReceiptStore.getState().removePerson(item.id);
-                  }
-                }}
-                style={{ marginLeft: 12 }}
-              />
-            </View>
-          );
-        }}
-        ListEmptyComponent={<Text style={{ marginTop: 8 }}>No saved people found.</Text>}
-        style={styles.peopleList}
-      />
-
-      {/* People List at Top */}
-      <Text style={{ fontWeight: 'bold', marginTop: 16 }}>People in Receipt</Text>
+      {/* People in Receipt as horizontal tiles */}
       <FlatList
         data={people}
         keyExtractor={item => item.id}
+        horizontal
         renderItem={({ item }) => (
-          <View style={styles.personRow}>
+          <View style={styles.personTile}>
             <Text style={styles.personText}>{item.name}</Text>
           </View>
         )}
-        ListEmptyComponent={<Text style={{ marginTop: 32 }}>No people added yet.</Text>}
-        style={styles.peopleList}
+        ListEmptyComponent={<Text style={{ marginTop: 16 }}>No people added yet.</Text>}
+        style={{ marginBottom: 16, maxHeight: 60 }}
+        contentContainerStyle={{ alignItems: 'center' }}
       />
-      <TextInput
-        placeholder="Person Name"
-        value={newPersonName}
-        onChangeText={setNewPersonName}
-        style={styles.input}
-      />
-      <Button title="Add Person" onPress={handleAddPerson} disabled={loading} />
+  {/* Removed add person input/button, now handled in select_people screen */}
       {/* Receipt Items List at Bottom */}
       <Text style={styles.subtitle}>Receipt Items</Text>
       <FlatList
@@ -274,6 +206,17 @@ export default function AssignPeopleScreen() {
 }
 
 const styles = StyleSheet.create({
+  personTile: {
+    padding: 8,
+    marginRight: 8,
+    backgroundColor: '#e6f7ff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#0a7ea4',
+    minWidth: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   assignedRow: {
     flexDirection: 'row',
     alignItems: 'center',
